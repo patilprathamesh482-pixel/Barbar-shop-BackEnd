@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  BARBER
+}
+
+model User {
+  id             String   @id @default(uuid())
+  name           String
+  contact_number String   @unique
+  password_hash  String
+  email          String?  @unique
+  role           Role
+  visit_count    Int      @default(0)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  shops        BarberShop[]
+  appointments Appointment[]
+  loyalty      Loyalty[]
+}
+
+model BarberShop {
+  id           String @id @default(uuid())
+  owner_id     String
+  name         String
+  address      String
+  latitude     Float
+  longitude    Float
+  chairs_count Int
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  owner        User          @relation(fields: [owner_id], references: [id])
+  services     Service[]
+  appointments Appointment[]
+  Loyalty      Loyalty[]
+}
+
+model Service {
+  id           String  @id @default(uuid())
+  shop_id      String
+  name         String
+  description  String?
+  price        Float
+  duration_min Int
+
+  created_at DateTime @default(now())
+
+  shop         BarberShop    @relation(fields: [shop_id], references: [id])
+  appointments Appointment[]
+}
+
+model Appointment {
+  id             String            @id @default(uuid())
+  user_id        String
+  shop_id        String
+  service_id     String
+  scheduled_time DateTime
+  status         AppointmentStatus @default(PENDING)
+  chair_number   Int?
+  visit_count    Int               @default(1)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user    User       @relation(fields: [user_id], references: [id])
+  shop    BarberShop @relation(fields: [shop_id], references: [id])
+  service Service    @relation(fields: [service_id], references: [id])
+}
+
+model Loyalty {
+  id            String    @id @default(uuid())
+  user_id       String
+  shop_id       String
+  visit_count   Int       @default(0)
+  last_visit_at DateTime?
+
+  user User       @relation(fields: [user_id], references: [id])
+  shop BarberShop @relation(fields: [shop_id], references: [id])
+}
+
+enum AppointmentStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETEDsss
+  CANCELLED
+}
